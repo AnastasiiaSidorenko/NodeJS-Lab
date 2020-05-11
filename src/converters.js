@@ -1,6 +1,6 @@
-function convertString(str, length) {
-    const string = str.substr(0, length);
-    return string.split('').reverse().join('');
+function convertString(string, length) {
+    const cutString = string.substr(0, length);
+    return cutString.split('').reverse().join('');
 }
 
 function convertCSVToJSON(input, output) {

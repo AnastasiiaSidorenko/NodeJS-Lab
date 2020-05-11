@@ -30,7 +30,7 @@ const argv = require('minimist')(process.argv.slice(2), {
     unknown: (arg) => {
         console.error('Unknown option:', arg);
         meow.showHelp();
-        return true;
+        return false;
     }
 });
 
