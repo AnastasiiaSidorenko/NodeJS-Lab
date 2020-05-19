@@ -1,7 +1,8 @@
 ### How to run project
 1. Run `npm install`
 2. Run `cd src`
-3. Run `node index.js -h` to see available options
+*  Run `node index.js -h` to see available options
+*  Run `npx nodemon app.js` to run the server
 
 ### How to use linter
 * Run `npm run lint` to run eslint
