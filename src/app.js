@@ -1,45 +1,64 @@
 const fs = require('fs');
 const express = require('express');
+const mongoose = require('mongoose');
+const Pokemon = require('./schemas/pokemon');
+
 const app = express();
 const port = 8080;
+const DB = mongoose.connection;
+const DB_URL = 'mongodb://localhost:27017/pokedex';
 
 app.use(express.json());
 
-const pokemons = JSON.parse(fs.readFileSync('../pokemons.json'));
+const initialState = JSON.parse(fs.readFileSync('../pokemons.json'));
 
 app.get('/pokemons', (req, res) => {
     const name = req.query.name;
-    let filteredPokemons;
+    let query;
     if (name) {
-        filteredPokemons = pokemons.filter(pokemon => pokemon.name.indexOf(name) > -1);
+        query = Pokemon.find({ name });
     } else {
-        filteredPokemons = pokemons;
+        query = Pokemon.find({});
     }
-    res.status(200).json({
-        status: 'success',
-        results: pokemons.length,
-        data: {
-            pokemons: filteredPokemons
+    query.exec((err, pokemons) => {
+        if (err) {
+            res.status(500).json({
+                status: 'Request failed',
+                message: err
+            });
         }
+        res.status(200).json({
+            status: 'success',
+            results: pokemons.length,
+            data: {
+                pokemons
+            }
+        });
     });
 });
 
 app.get('/pokemons/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const pokemon = pokemons.find(item => item.id === id);
-
-    if (!pokemon) {
-        return res.status(404).json({
-            status: 'fail',
-            message: 'Invalid id'
-        });
-    }
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            pokemon
+    const id = req.params.id;
+    const query = Pokemon.findById(id);
+    query.exec((err, pokemon) => {
+        if (err) {
+            return res.status(500).json({
+                status: 'Request failed',
+                message: err
+            });
         }
+        if (!pokemon) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Invalid id'
+            });
+        }
+        res.status(200).json({
+            status: 'success',
+            data: {
+                pokemon
+            }
+        });
     });
 });
 
@@ -55,48 +74,55 @@ app.get('/caughtPokemons', (req, res) => {
 });
 
 app.post('/pokemons', (req, res) => {
-    const newId = pokemons[pokemons.length - 1].id + 1;
     const newPokemon = {
         name: '',
         damage: '',
         isCaught: '',
         createdAt: '',
-        ...req.body,
-        id: newId
+        id: null,
+        ...req.body
     };
-    pokemons.push(newPokemon);
-
-    res.status(201).json({
-        status: 'success',
-        data: {
-            pokemon: newPokemon
+    Pokemon.create(newPokemon, (err, pokemon) => {
+        if (err) {
+            return res.status(500).json({
+                status: 'Request failed',
+                message: err
+            });
         }
-    })
+        res.status(201).json({
+            status: 'success',
+            data: {
+                pokemon
+            }
+        });
+    });
 });
 
 app.patch('/pokemons/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const pokemon = pokemons.find(item => item.id === id);
-
-    if (!pokemon) {
-        return res.status(404).json({
-            status: 'fail',
-            message: 'Invalid id'
-        });
-    }
-
-    const index = pokemons.indexOf(pokemon);
+    const id = req.params.id;
     const newPokemon = {
-        ...pokemon,
         ...req.body
     };
-    pokemons.splice(index, 1, newPokemon);
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            pokemon: newPokemon
+    const query = Pokemon.findByIdAndUpdate(id, newPokemon, { new: true });
+    query.exec((err, pokemon) => {
+        if (err) {
+            return res.status(500).json({
+                status: 'Request failed',
+                message: err
+            });
         }
+        if (!pokemon) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Invalid id'
+            });
+        }
+        res.status(200).json({
+            status: 'success',
+            data: {
+                pokemon
+            }
+        })
     })
 });
 
@@ -122,21 +148,45 @@ app.patch('/catchPokemon/:id', (req, res) => {
 });
 
 app.delete('/pokemons/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const pokemon = pokemons.find(item => item.id === id);
-
-    if (!pokemon) {
-        return res.status(404).json({
-            status: 'fail',
-            message: 'Invalid id'
+    const id = req.params.id;
+    const query = Pokemon.findByIdAndDelete(id);
+    query.exec((err, pokemon) => {
+        if (err) {
+            return res.status(500).json({
+                status: 'Request failed',
+                message: err
+            });
+        }
+        if (!pokemon) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Invalid id'
+            });
+        }
+        res.status(204).json({
+            status: 'success',
+            data: null
         });
-    }
-    const index = pokemons.indexOf(pokemon);
-    pokemons.splice(index, 1);
-    res.status(204).json({
-        status: 'success',
-        data: null
     });
 });
 
+mongoose.connect(DB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
 app.listen(port, () => console.log(`app is running on port ${port}`));
+
+DB.once('open', () => {
+    console.log('DB connected');
+    Pokemon.find({}, (err, pokemons) => {
+        if (!pokemons.length) {
+            loadInitialState();
+        }
+    });
+});
+
+function loadInitialState() {
+    Pokemon.insertMany(initialState, (err) => {
+        if (err) {
+            console.log('Request failed');
+        }
+        console.log('Initiail pokemons state is saved!');
+    });
+}
