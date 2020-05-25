@@ -2,6 +2,7 @@ const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
 const Pokemon = require('./schemas/pokemon');
+const User = require('./schemas/user');
 
 const app = express();
 const port = 8080;
@@ -10,7 +11,8 @@ const DB_URL = 'mongodb://localhost:27017/pokedex';
 
 app.use(express.json());
 
-const initialState = JSON.parse(fs.readFileSync('../pokemons.json'));
+const defaultPokemons = JSON.parse(fs.readFileSync('../pokemons.json'));
+const defaultUsers = JSON.parse(fs.readFileSync('../users.json'));
 
 app.get('/pokemons', (req, res) => {
     const name = req.query.name;
@@ -177,16 +179,30 @@ DB.once('open', () => {
     console.log('DB connected');
     Pokemon.find({}, (err, pokemons) => {
         if (!pokemons.length) {
-            loadInitialState();
+            loadDefaultPokemons();
+        }
+    });
+    User.find({}, (err, users) => {
+        if (!users.length) {
+            loadDefaultUsers();
         }
     });
 });
 
-function loadInitialState() {
-    Pokemon.insertMany(initialState, (err) => {
+function loadDefaultPokemons() {
+    Pokemon.insertMany(defaultPokemons, (err) => {
         if (err) {
-            console.log('Request failed');
+            console.log('Pokemons request failed');
         }
-        console.log('Initiail pokemons state is saved!');
+        console.log('Pokemons are saved!');
+    });
+}
+
+function loadDefaultUsers() {
+    User.insertMany(defaultUsers, (err) => {
+        if (err) {
+            console.log('Users request failed');
+        }
+        console.log('Users are saved!');
     });
 }
