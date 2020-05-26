@@ -3,7 +3,7 @@
         "name": "bulbasaur",
         "id": 1,
         "damage": 51,
-        "isCaught": false,
+        "isCaught": true,
         "createdAt": "2020-04-15"
     },
     {

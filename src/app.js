@@ -1,3 +1,4 @@
+const { Router } = require('express');
 const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -9,12 +10,28 @@ const port = 8080;
 const DB = mongoose.connection;
 const DB_URL = 'mongodb://localhost:27017/pokedex';
 
+const pokemons = Router();
+const router = Router();
+const caughtPokemons = Router();
+const catchPokemon = Router();
+
+const passport = require('./routes/password');
+const auth = require('./routes/auth');
+
 app.use(express.json());
+// app.use('/', pokemons);
+// app.use('/', router);
+router.use('/auth', passport.authenticate('local', { session: false }), auth);
+router.use('/pokemons', passport.authenticate('bearer', { session: false }), pokemons);
+router.use('/caughtPokemons', passport.authenticate('bearer', { session: false }), caughtPokemons);
+router.use('/catchPokemon', passport.authenticate('bearer', { session: false }), catchPokemon);
+
+app.use('/', router);
 
 const defaultPokemons = JSON.parse(fs.readFileSync('../pokemons.json'));
 const defaultUsers = JSON.parse(fs.readFileSync('../users.json'));
 
-app.get('/pokemons', (req, res) => {
+pokemons.get('/', (req, res) => {
     const name = req.query.name;
     let query;
     if (name) {
@@ -39,7 +56,7 @@ app.get('/pokemons', (req, res) => {
     });
 });
 
-app.get('/pokemons/:id', (req, res) => {
+pokemons.get('/:id', (req, res) => {
     const id = req.params.id;
     const query = Pokemon.findById(id);
     query.exec((err, pokemon) => {
@@ -64,8 +81,8 @@ app.get('/pokemons/:id', (req, res) => {
     });
 });
 
-app.get('/caughtPokemons', (req, res) => {
-    const caughtPokemons = pokemons.filter(pokemon => pokemon.isCaught);
+caughtPokemons.get('/', (req, res) => {
+    const caughtPokemons = defaultPokemons.filter(pokemon => pokemon.isCaught);
 
     res.status(200).json({
         status: 'success',
@@ -75,7 +92,7 @@ app.get('/caughtPokemons', (req, res) => {
     });
 });
 
-app.post('/pokemons', (req, res) => {
+pokemons.post('/', (req, res) => {
     const newPokemon = {
         name: '',
         damage: '',
@@ -100,7 +117,7 @@ app.post('/pokemons', (req, res) => {
     });
 });
 
-app.patch('/pokemons/:id', (req, res) => {
+pokemons.patch('/:id', (req, res) => {
     const id = req.params.id;
     const newPokemon = {
         ...req.body
@@ -128,9 +145,9 @@ app.patch('/pokemons/:id', (req, res) => {
     })
 });
 
-app.patch('/catchPokemon/:id', (req, res) => {
+catchPokemon.patch('/:id', (req, res) => {
     const id = parseInt(req.params.id);
-    const pokemon = pokemons.find(item => item.id === id);
+    const pokemon = defaultPokemons.find(item => item.id === id);
 
     if (!pokemon) {
         return res.status(404).json({
@@ -149,7 +166,7 @@ app.patch('/catchPokemon/:id', (req, res) => {
     })
 });
 
-app.delete('/pokemons/:id', (req, res) => {
+pokemons.delete('/:id', (req, res) => {
     const id = req.params.id;
     const query = Pokemon.findByIdAndDelete(id);
     query.exec((err, pokemon) => {
@@ -206,3 +223,4 @@ function loadDefaultUsers() {
         console.log('Users are saved!');
     });
 }
+
