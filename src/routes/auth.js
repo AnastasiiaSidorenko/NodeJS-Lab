@@ -7,7 +7,7 @@ const privateKey = require('../privateKey');
 
 auth.post('/',
     (req, res) => {
-        const token = jwt.sign({}, privateKey, { expiresIn: '100000s' });
+        const token = jwt.sign({}, privateKey, { expiresIn: '600s' });
         res.send(token);
     });
 
