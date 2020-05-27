@@ -14,19 +14,23 @@ const router = require('./routes/router');
 app.use(express.json());
 app.use('/', router);
 
-mongoose.connect(DB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
+mongoose.connect(DB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useFindAndModify: false,
+});
 app.listen(port, () => console.log(`app is running on port ${port}`));
 
 DB.once('open', () => {
-    console.log('DB connected');
-    Pokemon.find({}, (err, pokemons) => {
-        if (!pokemons.length) {
-            loadDefaultPokemons();
-        }
-    });
-    User.find({}, (err, users) => {
-        if (!users.length) {
-            loadDefaultUsers();
-        }
-    });
+  console.log('DB connected');
+  Pokemon.find({}, (err, pokemons) => {
+    if (!pokemons.length) {
+      loadDefaultPokemons();
+    }
+  });
+  User.find({}, (err, users) => {
+    if (!users.length) {
+      loadDefaultUsers();
+    }
+  });
 });

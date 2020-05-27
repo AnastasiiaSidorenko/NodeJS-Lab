@@ -2,8 +2,8 @@ const { Router } = require('express');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const BearerStrategy = require('passport-http-bearer');
-const User = require('../schemas/user');
 const jwt = require('jsonwebtoken');
+const User = require('../schemas/user');
 const pokemons = require('./pokemons');
 const catchPokemon = require('./catchPokemon');
 const caughtPokemons = require('./caughtPokemons');
@@ -13,47 +13,47 @@ const privateKey = require('../privateKey');
 const router = Router();
 
 function verifyJWT(token) {
-    let isValid = false;
-    if (token) {
-        jwt.verify(token, privateKey, function (err) {
-            if (err) {
-                isValid = false;
-            } else {
-                isValid = true;
-            }
-        });
-    } else {
+  let isValid = false;
+  if (token) {
+    jwt.verify(token, privateKey, (err) => {
+      if (err) {
         isValid = false;
-    }
-    return isValid;
+      } else {
+        isValid = true;
+      }
+    });
+  } else {
+    isValid = false;
+  }
+  return isValid;
 }
 
 passport.use(new LocalStrategy(
-    { session: false },
-    function (username, password, done) {
-        User.findOne({ username }, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            if (!user) {
-                return done(null, false, { message: 'Incorrect username' });
-            }
-            if (user.password !== password) {
-                return done(null, false, { message: 'Incorrect password' });
-            }
-            return done(null, { username, password });
-        });
-    }
+  { session: false },
+  ((username, password, done) => {
+    User.findOne({ username }, (err, user) => {
+      if (err) {
+        return done(err);
+      }
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username' });
+      }
+      if (user.password !== password) {
+        return done(null, false, { message: 'Incorrect password' });
+      }
+      return done(null, { username, password });
+    });
+  }),
 ));
 
 passport.use(new BearerStrategy(
-    function (token, done) {
-        const isValid = verifyJWT(token);
-        if (!isValid) {
-            return done(null, false);
-        }
-        return done(null, token);
+  ((token, done) => {
+    const isValid = verifyJWT(token);
+    if (!isValid) {
+      return done(null, false);
     }
+    return done(null, token);
+  }),
 ));
 
 router.use('/auth', passport.authenticate('local', { session: false }), auth);
