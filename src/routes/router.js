@@ -4,17 +4,18 @@ const LocalStrategy = require('passport-local');
 const BearerStrategy = require('passport-http-bearer');
 const User = require('../schemas/user');
 const jwt = require('jsonwebtoken');
+const pokemons = require('./pokemons');
+const catchPokemon = require('./catchPokemon');
+const caughtPokemons = require('./caughtPokemons');
+const auth = require('./auth');
+const privateKey = require('../privateKey');
 
 const router = Router();
-
-const pokemons = require('../app');
-// const auth = require('./auth');
-const privateKey = require('../privateKey');
 
 function verifyJWT(token) {
     let isValid = false;
     if (token) {
-        jwt.verify(token, privateKey, function (err, decoded) {
+        jwt.verify(token, privateKey, function (err) {
             if (err) {
                 isValid = false;
             } else {
@@ -55,7 +56,9 @@ passport.use(new BearerStrategy(
     }
 ));
 
-// router.use('/pokemons', passport.authenticate('bearer', { session: false }), pokemons);
-// router.use('/auth', passport.authenticate('local', { session: false }), auth);
+router.use('/auth', passport.authenticate('local', { session: false }), auth);
+router.use('/pokemons', passport.authenticate('bearer', { session: false }), pokemons);
+router.use('/caughtPokemons', passport.authenticate('bearer', { session: false }), caughtPokemons);
+router.use('/catchPokemon', passport.authenticate('bearer', { session: false }), catchPokemon);
 
-module.exports = passport;
+module.exports = router;
