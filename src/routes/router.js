@@ -9,6 +9,7 @@ const catchPokemon = require('./catchPokemon');
 const caughtPokemons = require('./caughtPokemons');
 const auth = require('./auth');
 const privateKey = require('../privateKey');
+const bcrypt = require('bcryptjs');
 
 const router = Router();
 
@@ -38,10 +39,12 @@ passport.use(new LocalStrategy(
       if (!user) {
         return done(null, false, { message: 'Incorrect username' });
       }
-      if (user.password !== password) {
+      bcrypt.compare(password, user.password).then((res) => {
+        if (res) {
+          return done(null, { username, password });
+        }
         return done(null, false, { message: 'Incorrect password' });
-      }
-      return done(null, { username, password });
+      });
     });
   }),
 ));

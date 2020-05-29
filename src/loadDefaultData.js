@@ -15,11 +15,13 @@ module.exports = {
     });
   },
   loadDefaultUsers() {
-    User.insertMany(defaultUsers, (err) => {
-      if (err) {
-        console.log('Users request failed');
-      }
-      console.log('Users are saved!');
+    defaultUsers.forEach(user => {
+      User.create(user, (err) => {
+        if (err) {
+          console.log('User request failed');
+        }
+        console.log(`User ${user.username} is saved!`);
+      });
     });
   },
 };
