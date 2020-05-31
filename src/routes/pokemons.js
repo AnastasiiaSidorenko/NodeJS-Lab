@@ -1,6 +1,5 @@
 const { Router } = require('express');
 const PokemonsService = require('../services/pokemons.service');
-// const Pokemon = require('../schemas/pokemon');
 
 const router = Router();
 
