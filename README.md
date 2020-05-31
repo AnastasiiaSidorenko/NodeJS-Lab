@@ -16,3 +16,7 @@
 1. Launch `mongo.exe` in `C:\Program Files\MongoDB\Server\4.2\bin`
 2. Create new base `pokedex` and new collection `pokemons` in MongoDB
 3. Run `npx nodemon app.js`
+
+### How to launch tests
+1. To launch the test `pokemon.js` run before `npx nodemon app.js`
+2. Run `npm test`
